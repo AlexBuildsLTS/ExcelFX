@@ -1,0 +1,11 @@
+{
+  "endpoints": {
+    "SWESTR Interest Rate": "https://api.riksbank.se/swestr/v1/{interestRateId}?fromDate={fromDate}&toDate={toDate}",
+    "SWESTR All Interest Rates": "https://api.riksbank.se/swestr/v1/all/{interestRateId}?fromDate={fromDate}&toDate={toDate}",
+    "SWESTR Average Latest": "https://api.riksbank.se/swestr/v1/avg/latest/{compoundedAverageId}",
+    "SWESTR Index Latest": "https://api.riksbank.se/swestr/v1/index/latest/{compoundedIndexId}",
+    "SWESTR Latest Interest Rate": "https://api.riksbank.se/swestr/v1/latest/{interestRateId}",
+    "SWESTR Average": "https://api.riksbank.se/swestr/v1/avg/{compoundedAverageId}?fromDate={fromDate}&toDate={toDate}",
+    "SWESTR Index": "https://api.riksbank.se/swestr/v1/index/{compoundedIndexId}?fromDate={fromDate}&toDate={toDate}"
+  }
+}
