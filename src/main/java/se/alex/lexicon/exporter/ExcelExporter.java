@@ -5,27 +5,34 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 public class ExcelExporter {
 
-    public static void export(String filePath, String api, String parameter, double amount, double result) throws IOException {
+    // Export data to an Excel file
+    public void exportToExcel(String filePath, List<Map<String, Object>> data) {
         Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Exchange Rates");
+        Sheet sheet = workbook.createSheet("Data");
 
-        Row header = sheet.createRow(0);
-        header.createCell(0).setCellValue("API");
-        header.createCell(1).setCellValue("Parameter");
-        header.createCell(2).setCellValue("Amount");
-        header.createCell(3).setCellValue("Converted Amount");
+        int rowNum = 0;
+        for (Map<String, Object> rowData : data) {
+            Row row = sheet.createRow(rowNum++);
+            int colNum = 0;
+            for (Object field : rowData.values()) {
+                Cell cell = row.createCell(colNum++);
+                if (field instanceof String) {
+                    cell.setCellValue((String) field);
+                } else if (field instanceof Number) {
+                    cell.setCellValue(((Number) field).doubleValue());
+                }
+            }
+        }
 
-        Row dataRow = sheet.createRow(1);
-        dataRow.createCell(0).setCellValue(api);
-        dataRow.createCell(1).setCellValue(parameter);
-        dataRow.createCell(2).setCellValue(amount);
-        dataRow.createCell(3).setCellValue(result);
-
-        try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
-            workbook.write(fileOut);
+        try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
+            workbook.write(outputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

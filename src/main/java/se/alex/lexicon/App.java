@@ -1,39 +1,40 @@
 package se.alex.lexicon;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import se.alex.lexicon.converter.CurrencyConverter;
 import se.alex.lexicon.exporter.ExcelExporter;
 
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 
 public class App extends Application {
-    public static void main(String[] args) {
-        launch(args);
-    }
 
     @Override
     public void start(Stage primaryStage) {
-        // UI components setup
-        Label label = new Label("Enter amount to convert:");
+        // Create UI components
+        Label fromCurrencyLabel = new Label("From Currency:");
+        TextField fromCurrencyField = new TextField();
+
+        Label toCurrencyLabel = new Label("To Currency:");
+        TextField toCurrencyField = new TextField();
+
+        Label amountLabel = new Label("Amount:");
         TextField amountField = new TextField();
-        ComboBox<String> fromCurrencyBox = new ComboBox<>();
-        ComboBox<String> toCurrencyBox = new ComboBox<>();
-        ComboBox<String> apiBox = new ComboBox<>();
-        TextField parameterField = new TextField("Enter parameter");
-        TextField fromDateField = new TextField("Enter fromDate (YYYY-MM-DD)");
-        TextField toDateField = new TextField("Enter toDate (optional)");
-        Button convertButton = new Button("Convert");
-        Button exportButton = new Button("Export to Excel");
-        Label resultLabel = new Label();
 
-        fromCurrencyBox.getItems().addAll("USD", "SEK", "EUR"); // Add more currencies as needed
-        toCurrencyBox.getItems().addAll("USD", "SEK", "EUR");
+        Label resultLabel = new Label("Result:");
+        TextField resultField = new TextField();
+        resultField.setEditable(false);
 
-        apiBox.getItems().addAll(
+        Label apiEndpointLabel = new Label("API Endpoint:");
+        ComboBox<String> apiEndpointComboBox = new ComboBox<>();
+        apiEndpointComboBox.getItems().addAll(
                 "SWESTR Interest Rate",
                 "SWESTR All Interest Rates",
                 "SWESTR Average Latest",
@@ -43,44 +44,59 @@ public class App extends Application {
                 "SWESTR Index"
         );
 
-        // Event handlers
+        Button convertButton = new Button("Convert");
+        Button exportButton = new Button("Export to Excel");
+
+        // Set button actions
         convertButton.setOnAction(e -> {
-            try {
-                double amount = Double.parseDouble(amountField.getText());
-                String selectedApi = apiBox.getValue();
-                String parameter = parameterField.getText();
-                String fromDate = fromDateField.getText();
-                String toDate = toDateField.getText();
-                double result = CurrencyConverter.convert(selectedApi, parameter, fromDate, toDate, amount);
-                resultLabel.setText(String.format("%.2f", result));
-            } catch (IOException | NumberFormatException ex) {
-                resultLabel.setText("Error: " + ex.getMessage());
-                ex.printStackTrace(); // Print the stack trace for debugging
-            }
+            String fromCurrency = fromCurrencyField.getText();
+            String toCurrency = toCurrencyField.getText();
+            double amount = Double.parseDouble(amountField.getText());
+            String selectedEndpoint = apiEndpointComboBox.getValue();
+            CurrencyConverter converter = new CurrencyConverter();
+            double result = converter.convert(selectedEndpoint, fromCurrency, toCurrency, amount);
+            resultField.setText(String.valueOf(result));
         });
 
         exportButton.setOnAction(e -> {
-            try {
-                double amount = Double.parseDouble(amountField.getText());
-                String selectedApi = apiBox.getValue();
-                String parameter = parameterField.getText();
-                String fromDate = fromDateField.getText();
-                String toDate = toDateField.getText();
-                double result = CurrencyConverter.convert(selectedApi, parameter, fromDate, toDate, amount);
-                ExcelExporter.export("exchange_rates.xlsx", selectedApi, parameter, amount, result);
-                resultLabel.setText("Exported to exchange_rates.xlsx");
-            } catch (IOException | NumberFormatException ex) {
-                resultLabel.setText("Error: " + ex.getMessage());
-                ex.printStackTrace(); // Print the stack trace for debugging
-            }
+            ExcelExporter exporter = new ExcelExporter();
+            // Create sample data to export (this should be your actual data)
+            Map<String, Object> rowData = new HashMap<>();
+            rowData.put("FromCurrency", fromCurrencyField.getText());
+            rowData.put("ToCurrency", toCurrencyField.getText());
+            rowData.put("Amount", Double.parseDouble(amountField.getText()));
+            rowData.put("Result", Double.parseDouble(resultField.getText()));
+            exporter.exportToExcel("output.xlsx", List.of(rowData));
         });
 
-        // Layout setup
-        VBox layout = new VBox(10, label, amountField, fromCurrencyBox, toCurrencyBox, apiBox, parameterField, fromDateField, toDateField, convertButton, exportButton, resultLabel);
-        Scene scene = new Scene(layout, 300, 400);
+        // Arrange components in a grid
+        GridPane grid = new GridPane();
+        grid.setAlignment(Pos.CENTER);
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10, 10, 10, 10));
 
-        primaryStage.setTitle("BankApiRate Converter");
+        grid.add(fromCurrencyLabel, 0, 0);
+        grid.add(fromCurrencyField, 1, 0);
+        grid.add(toCurrencyLabel, 0, 1);
+        grid.add(toCurrencyField, 1, 1);
+        grid.add(amountLabel, 0, 2);
+        grid.add(amountField, 1, 2);
+        grid.add(resultLabel, 0, 3);
+        grid.add(resultField, 1, 3);
+        grid.add(apiEndpointLabel, 0, 4);
+        grid.add(apiEndpointComboBox, 1, 4);
+        grid.add(convertButton, 0, 5);
+        grid.add(exportButton, 1, 5);
+
+        // Create and set the scene
+        Scene scene = new Scene(grid, 400, 300);
         primaryStage.setScene(scene);
+        primaryStage.setTitle("Currency Converter");
         primaryStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }
