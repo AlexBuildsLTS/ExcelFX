@@ -4,35 +4,47 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 public class ExcelExporter {
 
-    // Export data to an Excel file
-    public void exportToExcel(String filePath, List<Map<String, Object>> data) {
+    public void exportToExcel(String filePath, String from, String to, double amount, double convertedAmount) throws IOException {
         Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Data");
+        Sheet sheet = workbook.createSheet("Conversion");
 
-        int rowNum = 0;
-        for (Map<String, Object> rowData : data) {
-            Row row = sheet.createRow(rowNum++);
-            int colNum = 0;
-            for (Object field : rowData.values()) {
-                Cell cell = row.createCell(colNum++);
-                if (field instanceof String) {
-                    cell.setCellValue((String) field);
-                } else if (field instanceof Number) {
-                    cell.setCellValue(((Number) field).doubleValue());
-                }
-            }
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("From Currency");
+        header.createCell(1).setCellValue("To Currency");
+        header.createCell(2).setCellValue("Amount");
+        header.createCell(3).setCellValue("Converted Amount");
+
+        Row row = sheet.createRow(1);
+        row.createCell(0).setCellValue(from);
+        row.createCell(1).setCellValue(to);
+        row.createCell(2).setCellValue(amount);
+        row.createCell(3).setCellValue(convertedAmount);
+
+        try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
+            workbook.write(fileOut);
         }
+    }
 
-        try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
-            workbook.write(outputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void editExcel(String filePath, String from, String to, double amount, double convertedAmount) throws IOException {
+        try (FileInputStream fileIn = new FileInputStream(filePath)) {
+            Workbook workbook = new XSSFWorkbook(fileIn);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            int lastRowNum = sheet.getLastRowNum();
+            Row row = sheet.createRow(lastRowNum + 1);
+            row.createCell(0).setCellValue(from);
+            row.createCell(1).setCellValue(to);
+            row.createCell(2).setCellValue(amount);
+            row.createCell(3).setCellValue(convertedAmount);
+
+            try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
+                workbook.write(fileOut);
+            }
         }
     }
 }

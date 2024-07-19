@@ -1,33 +1,51 @@
 package se.alex.lexicon.api;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
-import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ApiClient {
-    // Path to the configuration file
-    private static final String CONFIG_FILE_PATH = "/api_config.json";
-    // Map to store API endpoints
-    private static Map<String, String> endpoints;
 
-    // Static block to initialize the endpoints map
-    static {
-        try (InputStreamReader reader = new InputStreamReader(ApiClient.class.getResourceAsStream(CONFIG_FILE_PATH))) {
-            Gson gson = new Gson();
-            // Parse JSON file to a JsonObject
-            JsonObject jsonObject = gson.fromJson(reader, JsonObject.class);
-            // Extract the "endpoints" object and convert it to a Map
-            endpoints = gson.fromJson(jsonObject.get("endpoints"), Map.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load API endpoints from JSON configuration file", e);
-        }
+    private static final String BASE_URL = "https://api.riksbank.se/swea/v1/";
+
+    private Map<String, String> apiEndpoints;
+
+    public ApiClient() {
+        apiEndpoints = new HashMap<>();
+        apiEndpoints.put("SWESTR Interest Rate", "swestr/v1/{interestRateId}");
+        apiEndpoints.put("SWESTR All Interest Rates", "swestr/v1/all/{interestRateId}");
+        apiEndpoints.put("SWESTR Average Latest", "swestr/v1/avg/latest/{compoundedAverageId}");
+        apiEndpoints.put("SWESTR Index Latest", "swestr/v1/index/latest/{compoundedIndexId}");
+        apiEndpoints.put("SWESTR Latest Interest Rate", "swestr/v1/latest/{interestRateId}");
+        apiEndpoints.put("SWESTR Average", "swestr/v1/avg/{compoundedAverageId}");
+        apiEndpoints.put("SWESTR Index", "swestr/v1/index/{compoundedIndexId}");
     }
 
-    // Method to get an endpoint by key
-    public static String getEndpoint(String key) {
-        return endpoints.get(key);
+    public double getExchangeRate(String currency, String selectedApi) throws IOException {
+        String endpoint = apiEndpoints.get(selectedApi).replace("{interestRateId}", currency);
+        String url = BASE_URL + endpoint;
+        return fetchExchangeRate(url);
+    }
+
+    public double fetchExchangeRate(String url) throws IOException {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpGet request = new HttpGet(url);
+        CloseableHttpResponse response = httpClient.execute(request);
+
+        try {
+            String json = EntityUtils.toString(response.getEntity());
+            JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+            return jsonObject.get("rate").getAsDouble();
+        } finally {
+            response.close();
+        }
     }
 }
